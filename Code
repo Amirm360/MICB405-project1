@@ -1,1 +1,2 @@
 //sign in using ssh
+bwa index -p /home/kwong_mb18/Project_1/BWA_output/ref_genome.index /home/kwong_mb18/Project_1/ref_genome.fasta

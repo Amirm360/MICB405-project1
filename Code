@@ -1,2 +1,74 @@
 //sign in using ssh
 bwa index -p /home/kwong_mb18/Project_1/BWA_output/ref_genome.index /home/kwong_mb18/Project_1/ref_genome.fasta
+
+
+#!/bin/bash
+#./bwa_aln.sh
+# Align Fastq files to reference
+
+for i in ~/RawData/project_1/*.fastq; #Loop through all {i}.fastq files in RawData/project_1/ and run bwa aln
+do
+	echo Aligning ${i}...
+	bwa aln ~/ProcessedData/project_1/ref_genome_index ${i} > ${i}.sai
+	echo Completed aligning ${$}
+	mv ${i}.sai ~/ProcessedData/project_1/
+	#moves the new ${i}.sai files directly into the processed data directory to prepare for bwa sampe
+done
+
+
+#!/bin/bash
+#./bwa_sampe.sh
+#BWA Sampe Script
+
+for i in ~/RawData/project_1/*_1.fastq; #loop through all of the forward read fastq files
+do	
+	echo Mapping ${i}...
+	sample=$(echo ${i} | sed 's/_1.fastq//;s/.*\///') #Identify only the name and number of the sample
+	echo ${sample}
+	bwa sampe ~/ProcessedData/project_1/ref_genome_index \
+	~/ProcessedData/project_1/${sample}_1.fastq.sai \
+	~/ProcessedData/project_1/${sample}_2.fastq.sai \
+	~/RawData/project_1/${sample}_1.fastq \
+	~/RawData/project_1/${sample}_2.fastq \
+	1>~/ProcessedData/project_1/sam_files/${sample}.sam 2>~/ProcessedData/project_1/${sample}_log.txt
+	echo Done Mapping ${sample}!
+done
+
+
+#!/bin/bash
+# ./convert_sam.sh
+# Convert .sam files to .bam files
+
+for i in ~/ProcessedData/project_1/sam_files/*.sam;
+do
+	echo Converting ${i}
+	sample=$(echo ${i} | sed 's/.sam//;s/.*\///')
+	samtools view -b ${i} > ~/ProcessedData/project_1/sam_files/${sample}.bam
+	echo Done converting ${sample}.sam to ${sample}.bam
+done
+
+
+#!/bin/bash
+# ./samtools_index.sh
+
+#Index all of the sorted index files
+
+for i in ~/ProcessedData/project_1/sam_files/*.sorted.bam
+do
+	echo Indexing ${i}
+	samtools index ${i}
+	echo Done Indexing ${i}
+done
+
+
+#!/bin/bash
+# ./samtools_sort.sh
+#Sort all .bam files
+
+for i in ~/ProcessedData/project_1/sam_files/*.bam;
+do
+	echo Sorting ${i}
+	sample=$(echo ${i} | sed 's/.sam.bam//;s/.*\///')
+	samtools sort ${i} -o ~/ProcessedData/project_1/sam_files/${sample}.sorted.bam
+	echo Done sorting ${sample}
+done

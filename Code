@@ -1,13 +1,27 @@
-//sign in using ssh
-bwa index -p /home/kwong_mb18/Project_1/BWA_output/ref_genome.index /home/kwong_mb18/Project_1/ref_genome.fasta
+#All commands and scripts that MICB405 Group 10 used in project 1
 
+///
+
+#index the reference genome
+bwa index -p /home/ProcessedData/Project_1/t/ref_genome.index /home/RawData/project_1/ref_genome.fasta
+
+///
 
 #!/bin/bash
-#./bwa_mem.sh
+# ./bwa_mem.sh
 
-UPDATE WITH BWA_MEM.SH SCRIPT
+for i in /projects/micb405/resources/project_1/*_1.fastq.gz;
+do
+	sample=$(echo ${i} | sed 's/_1.fastq.gz//;s/.*\///') 
+	echo Aligning ${sample}...
+	bwa mem -t 10 ~/ProcessedData/project_1/ref_genome_index \
+	/projects/micb405/resources/project_1/${sample}_1.fastq.gz \
+	/projects/micb405/resources/project_1/${sample}_2.fastq.gz | \
+	samtools view -b - > ~/ProcessedData/project_1/sam_files/${sample}.bam
+	echo Done converting ${sample}.sam to ${sample}.bam
+done
 
-
+///
 
 #!/bin/bash
 # ./samtools_sort.sh
@@ -21,6 +35,7 @@ do
 	echo Done sorting ${sample}
 done
 
+///
 
 #!/bin/bash
 # ./samtools_index.sh
@@ -33,7 +48,66 @@ do
 	echo Done Indexing ${i}
 done
 
+///
 
+#!/bin/bash
+#./samtools_mpileup
 
-#Convert vcf files to fasta
+for i in ~/ProcessedData/project_1/sam_files/*.sorted.bam 
+do
+	echo Piling up ${i}
+	sample=$(echo ${i} | sed 's/.sorted.bam//;s/.*\///')
+	samtools mpileup -q 30 -u -f ~/RawData/project_1/ref_genome.fasta \
+	${i} > ProcessedData/project_1/mpileups/${sample}.bcf -I
+	echo Done piling up ${sample}
+done
+
+///
+
+#!/bin/bash
+# ./bcftools_call
+
+for bcf in ~/ProcessedData/project_1/mpileups/*.bcf
+do
+	echo Converting $bcf to vcf....
+	sample=$(echo ${bcf} | sed 's/.bcf//;s/.*\///')
+	bcftools call -O v -mv $bcf > ~/ProcessedData/project_1/mpileups/$sample.vcf
+	echo Done converting $sample to .vcf
+done	
+
+///
+
+#!/bin/bash
+#./filtering_vcf.sh
+
+for vcf in ProcessedData/project_1/vcf_dir/*.vcf.gz
+do
+	sample=$(echo ${vcf} | sed 's/.vcf.gz//;s/.*\///')
+	echo Filtering low quality variants in $sample
+	bcftools filter --exclude "QUAL < 200" $vcf > ProcessedData/project_1/filtered_vcf/${sample}.vcf
+	echo Done filtering $sample
+done
+
+///
+
+#To convert vcf files to fasta
 python /projects/micb405/resources/vcf_to_fasta_het.py ProcessedData/project_1/filtered_vcf/ filtered
+
+///
+
+#MUSCLE Multiple Sequence Aligner
+muscle -in ProcesssedData/project_1/filtered_vcf/filtered.fasta \
+-out ~/ProcessedData/Phylogeny/filtered_muscle.mfa
+
+///
+
+#RAxML-NG Phylogenetic Tree Generation
+raxml-ng --msa ProcessedData/Phylogeny/filtered_muscle.mfa --model GTR+G --threads 1
+
+///
+
+#Final output used for iTOL Tree Visualization
+
+~/filtered_muscle.mfa.raxml.bestTree
+
+((Patient_1:0.000001,Patient_0:0.000001):0.000001,((((Patient_8:0.000001,(((Patient_2:0.007052,(((Patient_4:0.007103,(Patient_12:0.014184,(Patient_3:0.000001,Patient_15:0.000001):0.000001):0.007074):0.000001,Patient_13:0.000001):0.000001,Patient_11:0.007029):0.007063):0.000001,Cat:0.000001):0.000001,(Patient_10:0.014277,Patient_5:0.000001):0.007052):0.007066):0.000001,Patient_6:0.007066):0.007060,(((Patient_14:0.000001,Patient_9:0.000001):0.007060,(Patient_16:0.000001,Guinea_pig:0.000001):0.007060):0.000001,Patient_7:0.000001):0.000001):0.023884,Bat:0.004810):0.103868,((Rabid_raccoon_4:0.012389,Rabid_raccoon_2:0.041012):0.305182,(Rabid_raccoon_1:0.167596,Rabid_raccoon_3:0.118506):0.087676):0.830161):0.0;

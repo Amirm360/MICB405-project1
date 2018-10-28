@@ -33,3 +33,7 @@ do
 	echo Done Indexing ${i}
 done
 
+
+
+#Convert vcf files to fasta
+python /projects/micb405/resources/vcf_to_fasta_het.py ProcessedData/project_1/filtered_vcf/ filtered

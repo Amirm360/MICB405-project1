@@ -102,7 +102,7 @@ muscle -in ProcesssedData/project_1/filtered_vcf/filtered.fasta \
 ///
 
 #RAxML-NG Phylogenetic Tree Generation
-raxml-ng --msa ProcessedData/Phylogeny/filtered_muscle.mfa --model GTR+G --threads 1
+raxml-ng --msa ProcessedData/Phylogeny/filtered_muscle.mfa --model GTR+G --threads 1 --trees rand{10}
 
 ///
 

@@ -71,7 +71,7 @@ for bcf in ~/ProcessedData/project_1/mpileups/*.bcf
 do
 	echo Converting $bcf to vcf....
 	sample=$(echo ${bcf} | sed 's/.bcf//;s/.*\///')
-	bcftools call -O v -mv $bcf > ~/ProcessedData/project_1/mpileups/$sample.vcf
+	bcftools call -O v -mv $bcf > ~/ProcessedData/project_1/vcf_dir/$sample.vcf
 	echo Done converting $sample to .vcf
 done	
 
